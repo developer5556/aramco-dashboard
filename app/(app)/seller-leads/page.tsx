@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -8,7 +8,7 @@ import { ScoreBadge, StatusBadge, EmptyState, Spinner } from '@/components/share
 import { formatDate, timeAgo, formatCounty } from '@/lib/utils'
 import { COUNTIES, LEAD_STATUSES } from '@/constants'
 
-export default function SellerLeadsPage() {
+function SellerLeadsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState('')
@@ -170,5 +170,13 @@ export default function SellerLeadsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SellerLeadsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Spinner /></div>}>
+      <SellerLeadsContent />
+    </Suspense>
   )
 }
