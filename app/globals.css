@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0A0A0F;
+  --surface: #13131A;
+  --border: #1E1E2E;
+  --primary: #6366F1;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: #F1F5F9;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #2E2E4E; }
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+/* Table */
+.table-row-hover:hover {
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+}
+
+/* Glow effects */
+.glow-primary { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+.glow-success { box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+.glow-danger { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15); }
+
+/* Status dot */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Active nav */
+.nav-active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366F1;
+  border-right: 2px solid #6366F1;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid;
+  letter-spacing: 0.05em;
+}
+
+/* Skeleton loader */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, #1a1a27 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
