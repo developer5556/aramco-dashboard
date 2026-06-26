@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
         const validUsername = credentials.username === 'Aramco'
         if (!validUsername) return null
 
-        const passwordHash = '$2a$10$sPWFJvy7u34uKGMnuvLykOkpvNju6cb/OmqV95g9H/XvFmPTxDcu2'
+        const passwordHash = '$2a$10$CoW.wEPpjbFoZY1/tRIhk.H8HzFhvgOwkE0NKqyPCJlvN3gNEyDey'
         if (!passwordHash) return null
 
         const validPassword = await bcrypt.compare(credentials.password, passwordHash)
