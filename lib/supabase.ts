@@ -1,9 +1,23 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+let _client: SupabaseClient | undefined
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+    if (!url || !key) {
+      return () => Promise.resolve({ data: null, error: null, count: 0 })
+    }
+
+    if (!_client) {
+      _client = createClient(url, key)
+    }
+
+    return (_client as any)[prop]
+  },
+})
 
 // ── Type helpers ──────────────────────────────────────────────
 export type SellerLead = {

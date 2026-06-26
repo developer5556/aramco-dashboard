@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import { signOut } from 'next-auth/react'
+
 
 const navItems = [
   { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
@@ -139,15 +139,6 @@ export default function Sidebar() {
             <div className="text-xs font-medium text-text-primary truncate">Hamza</div>
             <div className="text-xs text-text-secondary truncate">Owner</div>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-text-secondary hover:text-text-primary transition-colors"
-            title="Sign out"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
         </div>
       </div>
     </aside>
