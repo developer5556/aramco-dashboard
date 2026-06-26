@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -15,15 +16,33 @@ const navItems = [
 ]
 
 const secondaryNav = [
-  { href: '/analytics', icon: '📊', label: 'Analytics' },
-  { href: '/maps', icon: '🗺️', label: 'Maps' },
-  { href: '/contracts', icon: '📄', label: 'Contracts' },
+  { href: '/analytics', icon: '�', label: 'Analytics' },
+  { href: '/maps', icon: '�️', label: 'Maps' },
+  { href: '/contracts', icon: '�', label: 'Contracts' },
   { href: '/agent-monitor', icon: '🤖', label: 'Agent Monitor' },
   { href: '/notifications', icon: '🔔', label: 'Notifications', badge: 'approvals' },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
+  const toggleMobile = useCallback(() => setMobileOpen(prev => !prev), [])
 
   const { data: badges } = useQuery({
     queryKey: ['sidebar-badges'],
@@ -61,8 +80,9 @@ export default function Sidebar() {
     )
   }
 
-  return (
-    <aside className="w-56 min-h-screen bg-surface border-r border-border flex flex-col fixed left-0 top-0 z-40">
+  // Shared nav content — rendered inside both desktop and mobile
+  const renderNavContent = () => (
+    <>
       {/* Logo */}
       <div className="p-5 border-b border-border">
         <div className="flex items-center gap-3">
@@ -138,9 +158,53 @@ export default function Sidebar() {
             <div className="text-xs font-medium text-text-primary truncate">Hamza</div>
             <div className="text-xs text-text-secondary truncate">Owner</div>
           </div>
-
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger — placed in TopBar via sibling, but we render the toggle here for independence */}
+      <button
+        onClick={toggleMobile}
+        className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+        aria-label="Toggle navigation menu"
+      >
+        {mobileOpen ? (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Desktop sidebar — always visible on md+ */}
+      <aside className="hidden md:flex w-56 min-h-screen bg-surface border-r border-border flex-col fixed left-0 top-0 z-40">
+        {renderNavContent()}
+      </aside>
+
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile slide-in sidebar */}
+      <aside
+        className={cn(
+          'md:hidden fixed left-0 top-0 z-50 w-72 h-full bg-surface border-r border-border flex flex-col transition-transform duration-300 ease-in-out',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {renderNavContent()}
+      </aside>
+    </>
   )
 }

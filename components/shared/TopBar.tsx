@@ -19,8 +19,10 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
   }
 
   return (
-    <header className="h-14 border-b border-border bg-surface/50 backdrop-blur flex items-center px-6 gap-4 sticky top-0 z-30">
-      <div className="flex-1">
+    <header className="h-14 border-b border-border bg-surface/50 backdrop-blur flex items-center px-4 md:px-6 gap-4 sticky top-0 z-30">
+      {/* Spacer for mobile hamburger button */}
+      <div className="w-9 md:hidden" />
+      <div className="flex-1 min-w-0">
         <h1 className="text-sm font-semibold text-text-primary">{title}</h1>
         {subtitle && <p className="text-xs text-text-secondary">{subtitle}</p>}
       </div>
