@@ -101,7 +101,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-text-secondary/40 text-xs mt-6">
+        <p className="text-center text-text-secondary/40 text-xs mt-6">v4-PYTHON-WRITE | 
           Aramco Properties © 2025 · Authorized access only
         </p>
       </div>
