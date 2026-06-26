@@ -12,11 +12,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null
 
-        const validUsername = credentials.username === 'Aramco'
-        if (!validUsername) return null
-
-        const validPassword = credentials.password === 'Coolpass' + String.fromCharCode(36) + '123'
-        if (!validPassword) return null
+        if (credentials.username !== 'Aramco' || credentials.password !== 'Coolpass$123') return null
 
         return {
           id: '1',
@@ -33,7 +29,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
