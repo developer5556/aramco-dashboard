@@ -10,9 +10,27 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null
-        if (credentials.username !== 'Aramco' || credentials.password !== 'Coolpass123') return null
-        return { id: '1', name: 'Hamza', email: 'hamza@aramcoproperties.com', image: null }
+        try {
+          if (!credentials?.username || !credentials?.password) {
+            console.log('AUTH: Missing credentials')
+            return null
+          }
+          console.log('AUTH: Checking username:', credentials.username)
+          if (credentials.username !== 'Aramco') {
+            console.log('AUTH: Username mismatch')
+            return null
+          }
+          console.log('AUTH: Checking password')
+          if (credentials.password !== 'Coolpass123') {
+            console.log('AUTH: Password mismatch, got:', credentials.password)
+            return null
+          }
+          console.log('AUTH: Success!')
+          return { id: '1', name: 'Hamza', email: 'hamza@aramcoproperties.com', image: null }
+        } catch (e) {
+          console.log('AUTH ERROR:', e)
+          return null
+        }
       },
     }),
   ],
