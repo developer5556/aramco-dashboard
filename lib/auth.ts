@@ -1,5 +1,9 @@
 import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
+
+const VALID_USERNAME = 'Aramco'
+const VALID_PASSWORD_HASH = '$2a$10$/Y77gkQW./Ig41hZjDPfy.VpefvLS7iqKeSl3RPKskbmmelTJZSvy'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -10,7 +14,18 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        return { id: '1', name: 'Hamza', email: 'hamza@aramcoproperties.com', image: null }
+        if (!credentials?.username || !credentials?.password) {
+          return null
+        }
+
+        const usernameMatch = credentials.username === VALID_USERNAME
+        const passwordMatch = await bcrypt.compare(credentials.password, VALID_PASSWORD_HASH)
+
+        if (usernameMatch && passwordMatch) {
+          return { id: '1', name: 'Hamza', email: 'hamza@aramcoproperties.com', image: null }
+        }
+
+        return null
       },
     }),
   ],
