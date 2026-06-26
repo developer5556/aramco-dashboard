@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
         const validUsername = credentials.username === 'Aramco'
         if (!validUsername) return null
 
-        const validPassword = credentials.password === 'Coolpass$123'
+        const validPassword = credentials.password === 'Coolpass' + String.fromCharCode(36) + '123'
         if (!validPassword) return null
 
         return {
