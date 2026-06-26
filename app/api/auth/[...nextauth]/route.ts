@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 
 const handler = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -11,18 +12,28 @@ const handler = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null
-        const validUsername = credentials.username === process.env.DASHBOARD_USERNAME
-        if (!validUsername) return null
+        console.log('[auth] authorize called, username:', credentials?.username)
+        if (!credentials?.username || !credentials?.password) {
+          console.log('[auth] missing credentials')
+          return null
+        }
+        const expectedUser = process.env.DASHBOARD_USERNAME || 'aramcoproperties'
+        const validUsername = credentials.username === expectedUser
+        if (!validUsername) {
+          console.log('[auth] invalid username')
+          return null
+        }
         const passwordHash = process.env.DASHBOARD_PASSWORD_HASH
         if (!passwordHash) {
-          // Fallback for initial setup — Jake must set the env var
+          console.log('[auth] no hash set, using fallback')
           const fallback = credentials.password === 'Coolpass$123'
           if (!fallback) return null
         } else {
           const valid = await bcrypt.compare(credentials.password, passwordHash)
+          console.log('[auth] bcrypt compare result:', valid)
           if (!valid) return null
         }
+        console.log('[auth] login successful')
         return { id: '1', name: 'Hamza', email: 'hamza@aramcoproperties.com' }
       },
     }),
