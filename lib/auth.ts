@@ -1,6 +1,5 @@
 import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,10 +15,7 @@ export const authOptions: NextAuthOptions = {
         const validUsername = credentials.username === 'Aramco'
         if (!validUsername) return null
 
-        const passwordHash = '$2a$10$CoW.wEPpjbFoZY1/tRIhk.H8HzFhvgOwkE0NKqyPCJlvN3gNEyDey'
-        if (!passwordHash) return null
-
-        const validPassword = await bcrypt.compare(credentials.password, passwordHash)
+        const validPassword = credentials.password === 'Coolpass$123'
         if (!validPassword) return null
 
         return {
