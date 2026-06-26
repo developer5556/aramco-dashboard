@@ -13,10 +13,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null
 
-        const validUsername = credentials.username === process.env.DASHBOARD_USERNAME
+        const validUsername = credentials.username === 'Aramco'
         if (!validUsername) return null
 
-        const passwordHash = process.env.DASHBOARD_PASSWORD_HASH
+        const passwordHash = '$2a$10$sPWFJvy7u34uKGMnuvLykOkpvNju6cb/OmqV95g9H/XvFmPTxDcu2'
         if (!passwordHash) return null
 
         const validPassword = await bcrypt.compare(credentials.password, passwordHash)
