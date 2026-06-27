@@ -10,26 +10,41 @@ export type SellerLead = {
   id: string
   property_id: string | null
   owner_full_name: string | null
+  owner_first_name: string | null
+  owner_last_name: string | null
   owner_entity_name: string | null
+  owner_is_entity: boolean
+  mailing_address: string | null
+  mailing_city: string | null
+  mailing_state: string | null
+  mailing_zip: string | null
+  is_absentee_owner: boolean
   phone_primary: string | null
+  phone_secondary: string | null
   email: string | null
+  contact_status: string
   status: string
   score: number | null
   score_tier: 'hot' | 'warm' | 'cool' | 'skip' | null
   lead_source: string | null
-  county: string | null
-  next_followup_at: string | null
-  last_contacted_at: string | null
-  created_at: string
+  seller_motivation: string | null
   tax_delinquent: boolean
+  tax_delinquent_years: number | null
   pre_foreclosure: boolean
+  probate: boolean
   code_violations: boolean
   vacant: boolean
-  probate: boolean
+  divorce_filing: boolean
+  out_of_state_owner: boolean
+  mls_expired: boolean
   asking_price: number | null
   mortgage_balance: number | null
-  mailing_address: string | null
-  is_absentee_owner: boolean
+  next_followup_at: string | null
+  last_contacted_at: string | null
+  followup_count: number
+  created_at: string
+  updated_at: string
+  created_by: string | null
   properties?: Property
 }
 
