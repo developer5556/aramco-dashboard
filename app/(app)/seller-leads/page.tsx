@@ -22,7 +22,7 @@ function SellerLeadsContent() {
     queryFn: async () => {
       let q = supabase
         .from('seller_leads')
-        .select('*, properties(address, city, county)', { count: 'exact' })
+        .select('*, properties(address, city, county, state, zip)', { count: 'exact' })
         .order('score', { ascending: false, nullsFirst: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
@@ -101,6 +101,7 @@ function SellerLeadsContent() {
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">County</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Last Contact</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Source</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Zillow</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -115,10 +116,13 @@ function SellerLeadsContent() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs text-text-primary">
-                          {lead.properties?.address || lead.mailing_address || '—'}
+                          {lead.properties?.address || lead.mailing_address || lead.mailing_city || 'No address'}
                         </span>
                         {lead.properties?.city && (
                           <span className="text-text-secondary text-xs ml-1">{lead.properties.city}</span>
+                        )}
+                        {lead.properties?.county && !lead.properties?.address && (
+                          <span className="text-text-secondary text-xs ml-1">({formatCounty(lead.properties.county)})</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
@@ -135,6 +139,27 @@ function SellerLeadsContent() {
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
                         {lead.lead_source || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">
+                        {lead.properties?.address && lead.properties?.city && lead.properties?.state && lead.properties?.zip ? (
+                          <a 
+                            href={`https://www.zillow.com/homes/${[lead.properties.address, lead.properties.city, lead.properties.state, lead.properties.zip].map(s => (s || '').replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary-400 hover:text-primary-300 underline text-xs"
+                          >
+                            View on Zillow
+                          </a>
+                        ) : lead.properties?.address ? (
+                          <a 
+                            href={`https://www.zillow.com/homes/${lead.properties.address.replace(/\s+/g, '-').replace(/[#?,]/g, '')}_rb/`}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary-400 hover:text-primary-300 underline text-xs"
+                          >
+                            View on Zillow
+                          </a>
+                        ) : '—'}
                       </td>
                     </tr>
                   ))}
