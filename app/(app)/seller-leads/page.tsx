@@ -50,7 +50,8 @@ function SellerLeadsContent() {
     return (
       l.properties?.address?.toLowerCase().includes(s) ||
       l.owner_full_name?.toLowerCase().includes(s) ||
-      l.owner_entity_name?.toLowerCase().includes(s)
+      l.owner_entity_name?.toLowerCase().includes(s) ||
+      l.phone_primary?.toLowerCase().includes(s)
     )
   }) || []
 
@@ -64,7 +65,7 @@ function SellerLeadsContent() {
           <div className="flex-1 min-w-48">
             <input
               type="text"
-              placeholder="Search address or owner..."
+              placeholder="Search address, owner, or phone..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all"
