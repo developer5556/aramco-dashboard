@@ -20,27 +20,25 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Flatten: one pin per property + lead pair
-  const leads = (data || [])
-    .filter((p: any) => p.seller_leads && p.seller_leads.length > 0)
-    .map((p: any) => {
-      const lead = p.seller_leads[0]
-      return {
-        id: lead.id,
-        property_id: p.id,
-        address: p.address,
-        city: p.city,
-        county: p.county,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        score_tier: lead.score_tier,
-        score: lead.score,
-        owner_full_name: lead.owner_full_name,
-        status: lead.status,
-        arv_mid: p.arv_mid,
-        mao_standard: p.mao_standard,
-      }
-    })
+  // Map ALL properties — with or without linked seller_leads
+  const mapped = (data || []).map((p: any) => {
+    const lead = p.seller_leads?.[0] || null
+    return {
+      id: lead?.id || `prop-${p.id}`,
+      property_id: p.id,
+      address: p.address,
+      city: p.city,
+      county: p.county,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      score_tier: lead?.score_tier || null,
+      score: lead?.score || null,
+      owner_full_name: lead?.owner_full_name || null,
+      status: lead?.status || 'no_lead',
+      arv_mid: p.arv_mid,
+      mao_standard: p.mao_standard,
+    }
+  })
 
-  return NextResponse.json(leads)
+  return NextResponse.json(mapped)
 }

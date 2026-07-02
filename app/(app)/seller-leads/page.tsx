@@ -14,11 +14,15 @@ function SellerLeadsContent() {
   const [search, setSearch] = useState('')
   const [countyFilter, setCountyFilter] = useState<string[]>([])
   const [tierFilter, setTierFilter] = useState(searchParams.get('tier') || '')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [sourceFilter, setSourceFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 25
 
   const { data, isLoading } = useQuery({
-    queryKey: ['seller-leads', search, countyFilter, tierFilter, page],
+    queryKey: ['seller-leads', search, countyFilter, tierFilter, statusFilter, sourceFilter, dateFrom, dateTo, page],
     queryFn: async () => {
       let q = supabase
         .from('seller_leads')
@@ -27,6 +31,10 @@ function SellerLeadsContent() {
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
       if (tierFilter) q = q.eq('score_tier', tierFilter)
+      if (statusFilter) q = q.eq('status', statusFilter)
+      if (sourceFilter) q = q.eq('lead_source', sourceFilter)
+      if (dateFrom) q = q.gte('created_at', new Date(dateFrom).toISOString())
+      if (dateTo) q = q.lte('created_at', new Date(dateTo + 'T23:59:59').toISOString())
       if (countyFilter.length) q = q.in('properties.county', countyFilter)
 
       const { data, count, error } = await q
@@ -73,12 +81,52 @@ function SellerLeadsContent() {
           </select>
 
           <select
+            value={statusFilter}
+            onChange={e => { setStatusFilter(e.target.value); setPage(0) }}
+            className="bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary/50 transition-all"
+          >
+            <option value="">All Statuses</option>
+            {LEAD_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+
+          <select
+            value={sourceFilter}
+            onChange={e => { setSourceFilter(e.target.value); setPage(0) }}
+            className="bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary/50 transition-all"
+          >
+            <option value="">All Sources</option>
+            <option value="atlas_scrape">Atlas Scrape</option>
+            <option value="socrata_counties">Socrata Counties</option>
+            <option value="baltimore_city_open_data">Baltimore City</option>
+            <option value="socrata_eviction">Eviction Records</option>
+            <option value="manual">Manual Entry</option>
+          </select>
+
+          <select
             onChange={e => { setCountyFilter(e.target.value ? [e.target.value] : []); setPage(0) }}
             className="bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary/50 transition-all"
           >
             <option value="">All Counties</option>
             {COUNTIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
+
+          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-2 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]"
+              placeholder="From"
+            />
+            <span>→</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => { setDateTo(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-2 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]"
+              placeholder="To"
+            />
+          </div>
 
           <span className="text-xs text-text-secondary ml-auto">{filtered.length} results</span>
         </div>

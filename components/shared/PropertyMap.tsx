@@ -47,12 +47,14 @@ const TIER_LABELS: Record<string, string> = {
 function getMarkerColor(lead: MapLead): string {
   if (lead.status === 'under_contract') return STATUS_COLORS.under_contract
   if (lead.status === 'closed') return STATUS_COLORS.closed
+  if (lead.status === 'no_lead') return '#334155'
   return TIER_COLORS[lead.score_tier || ''] || '#94A3B8'
 }
 
-function getMarkerRadius(tier: string | null): number {
-  if (tier === 'hot') return 10
-  if (tier === 'warm') return 8
+function getMarkerRadius(lead: MapLead): number {
+  if (lead.status === 'no_lead') return 4
+  if (lead.score_tier === 'hot') return 10
+  if (lead.score_tier === 'warm') return 8
   return 6
 }
 
@@ -125,26 +127,25 @@ export default function PropertyMap({ initialLeads = [] }: { initialLeads?: any[
       return
     }
 
-    const mapped: MapLead[] = (data || [])
-      .filter(p => p.seller_leads && (p.seller_leads as any[]).length > 0)
-      .map(p => {
-        const lead = (p.seller_leads as any[])[0]
-        return {
-          id: lead.id,
-          property_id: p.id,
-          address: p.address,
-          city: p.city,
-          county: p.county,
-          latitude: p.latitude,
-          longitude: p.longitude,
-          score_tier: lead.score_tier,
-          score: lead.score,
-          owner_full_name: lead.owner_full_name,
-          status: lead.status,
-          arv_mid: p.arv_mid,
-          mao_standard: p.mao_standard,
-        }
-      })
+    // Map ALL properties regardless of seller_leads linkage
+    const mapped: MapLead[] = (data || []).map(p => {
+      const lead = (p.seller_leads as any[])?.[0] || null
+      return {
+        id: lead?.id || `prop-${p.id}`,
+        property_id: p.id,
+        address: p.address,
+        city: p.city,
+        county: p.county,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        score_tier: lead?.score_tier || null,
+        score: lead?.score || null,
+        owner_full_name: lead?.owner_full_name || null,
+        status: lead?.status || 'no_lead',
+        arv_mid: p.arv_mid,
+        mao_standard: p.mao_standard,
+      }
+    })
 
     setAllLeads(mapped)
     setStats({
@@ -264,6 +265,7 @@ export default function PropertyMap({ initialLeads = [] }: { initialLeads?: any[
           { color: '#10B981', label: 'Under Contract', size: 6 },
           { color: '#8B5CF6', label: 'Closed', size: 6 },
           { color: '#94A3B8', label: 'Watch / Other', size: 6 },
+          { color: '#334155', label: 'No Lead Yet', size: 4 },
         ].map(item => (
           <div key={item.label} className="flex items-center gap-2 mb-1.5">
             <div className="rounded-full border border-white/20 flex-shrink-0"
@@ -300,15 +302,46 @@ export default function PropertyMap({ initialLeads = [] }: { initialLeads?: any[
             }}
           >
             <Popup>
-              <div style={{ minWidth: '220px', fontFamily: 'Inter, sans-serif' }}>
+              <div style={{ minWidth: '240px', fontFamily: 'Inter, sans-serif' }}>
                 <p style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: '#F1F5F9' }}>
                   {lead.address}
                 </p>
-                <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '6px' }}>
                   {lead.city} · {formatCounty(lead.county)}
+                  {lead.status === 'no_lead' && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#64748B', fontStyle: 'italic' }}>(unlinked)</span>
+                  )}
                 </p>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  {lead.score_tier && (
+
+                {/* Zillow thumbnail */}
+                {lead.address && (
+                  <a
+                    href={`https://www.zillow.com/homes/${[lead.address, lead.city, lead.county || ''].map(s => s.replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'block', marginBottom: '8px' }}
+                  >
+                    <div style={{
+                      width: '100%', height: '100px', borderRadius: '6px', overflow: 'hidden',
+                      background: 'linear-gradient(135deg, #1e40af20, #7c3aed20)',
+                      border: '1px solid #334155',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      position: 'relative'
+                    }}>
+                      <span style={{ fontSize: '32px' }}>🏠</span>
+                      <span style={{
+                        position: 'absolute', bottom: '6px', right: '8px',
+                        fontSize: '9px', color: '#6366F1', fontWeight: 600,
+                        background: '#1e1e2e', padding: '2px 6px', borderRadius: '4px'
+                      }}>
+                        Zillow ↗
+                      </span>
+                    </div>
+                  </a>
+                )}
+
+                {lead.score_tier && (
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
                     <span style={{
                       fontSize: '10px', fontWeight: 700, padding: '2px 8px',
                       borderRadius: '9999px', background: `${TIER_COLORS[lead.score_tier]}20`,
@@ -316,31 +349,57 @@ export default function PropertyMap({ initialLeads = [] }: { initialLeads?: any[
                     }}>
                       {TIER_LABELS[lead.score_tier]} {lead.score && ` · ${lead.score}`}
                     </span>
+                  </div>
+                )}
+
+                {lead.arv_mid || lead.mao_standard ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '8px' }}>
+                    <div>
+                      <p style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ARV</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#10B981' }}>{formatCurrency(lead.arv_mid)}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MAO</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#F1F5F9' }}>{formatCurrency(lead.mao_standard)}</p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {lead.owner_full_name && (
+                  <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '8px' }}>
+                    👤 {lead.owner_full_name}
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {lead.status !== 'no_lead' && (
+                    <Link
+                      href={`/seller-leads/${lead.id}`}
+                      style={{
+                        flex: 1, textAlign: 'center', padding: '6px',
+                        background: '#6366F1', color: 'white', borderRadius: '6px',
+                        fontSize: '11px', fontWeight: 600, textDecoration: 'none'
+                      }}
+                    >
+                      View Lead →
+                    </Link>
+                  )}
+                  {lead.address && (
+                    <a
+                      href={`https://www.zillow.com/homes/${[lead.address, lead.city, lead.county || ''].map(s => s.replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 10px',
+                        background: '#1E3A5F', color: '#60A5FA', borderRadius: '6px',
+                        fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                        border: '1px solid #1E3A5F'
+                      }}
+                    >
+                      🏠 Zillow
+                    </a>
                   )}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '8px' }}>
-                  <div>
-                    <p style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ARV</p>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#10B981' }}>{formatCurrency(lead.arv_mid)}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MAO</p>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#F1F5F9' }}>{formatCurrency(lead.mao_standard)}</p>
-                  </div>
-                </div>
-                <p style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '8px' }}>
-                  👤 {lead.owner_full_name || 'Unknown owner'}
-                </p>
-                <Link
-                  href={`/seller-leads/${lead.id}`}
-                  style={{
-                    display: 'block', textAlign: 'center', padding: '6px',
-                    background: '#6366F1', color: 'white', borderRadius: '6px',
-                    fontSize: '11px', fontWeight: 600, textDecoration: 'none'
-                  }}
-                >
-                  View Full Lead →
-                </Link>
               </div>
             </Popup>
           </CircleMarker>
