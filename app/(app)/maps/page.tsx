@@ -1,22 +1,44 @@
 'use client'
+import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import TopBar from '@/components/shared/TopBar'
 
-export default function MapsPage() {
-  return (
-    <div className="animate-fade-in">
-      <TopBar title="Property Map" subtitle="All properties across 6 Maryland counties" />
-      <div className="p-6">
-        <div className="card p-8 text-center">
-          <span className="text-4xl mb-4 block">🗺️</span>
-          <h2 className="text-text-primary font-semibold mb-2">Maps Ready to Configure</h2>
-          <p className="text-text-secondary text-sm max-w-md mx-auto">
-            Add your <code className="bg-bg px-1.5 py-0.5 rounded text-primary font-mono text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to your environment variables to enable the interactive property map.
-          </p>
-          <p className="text-text-secondary/60 text-xs mt-4">
-            Jake: integrate @vis.gl/react-google-maps here with property pins from the Supabase properties table.
-            Pin colors: red=HOT, orange=WARM, blue=COOL, green=under_contract, purple=closed.
-          </p>
+const PropertyMap = dynamic(
+  () => import('@/components/shared/PropertyMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+          <p className="text-text-secondary text-sm">Loading map...</p>
         </div>
+      </div>
+    )
+  }
+)
+
+export default function MapsPage() {
+  const [counts, setCounts] = useState<{ total: number; noCoords: number }>({ total: 0, noCoords: 0 })
+
+  useEffect(() => {
+    fetch('/api/map-data')
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const noCoords = data.filter((p: any) => !p.seller_leads || p.seller_leads.length === 0).length
+        setCounts({ total: data.length, noCoords })
+      })
+      .catch(() => {})
+  }, [])
+
+  return (
+    <div className="animate-fade-in flex flex-col h-screen">
+      <TopBar
+        title="Property Map"
+        subtitle={`${counts.total} leads mapped · ${counts.noCoords} properties without linked leads`}
+      />
+      <div className="flex-1 p-6 min-h-0">
+        <PropertyMap />
       </div>
     </div>
   )

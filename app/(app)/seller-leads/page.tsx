@@ -98,7 +98,7 @@ function SellerLeadsContent() {
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Address</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Owner</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">County</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">City/County</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Last Contact</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Source</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Zillow</th>
@@ -132,7 +132,7 @@ function SellerLeadsContent() {
                         <StatusBadge status={lead.status} />
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
-                        {lead.properties?.county ? formatCounty(lead.properties.county) : '—'}
+                        {lead.properties?.county ? formatCounty(lead.properties.county) : lead.mailing_city || '—'}
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
                         {lead.last_contacted_at ? timeAgo(lead.last_contacted_at) : '—'}
