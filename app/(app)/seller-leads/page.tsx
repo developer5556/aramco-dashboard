@@ -25,20 +25,6 @@ function SellerLeadsContent() {
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 25
 
-  const { data: cityOptions } = useQuery({
-    queryKey: ['distinct-cities'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('properties')
-        .select('city')
-        .not('city', 'is', null)
-        .order('city')
-      const cities = [...new Set(data?.map(d => d.city).filter(Boolean))]
-      return cities as string[]
-    },
-    staleTime: 300000,
-  })
-
   const { data, isLoading } = useQuery({
     queryKey: ['seller-leads', search, streetFilter, cityFilter, zipFilter, countyFilter, tierFilter, statusFilter, sourceFilter, hasPhone, dateFrom, dateTo, page],
     queryFn: async () => {
@@ -51,12 +37,12 @@ function SellerLeadsContent() {
       if (tierFilter) q = q.eq('score_tier', tierFilter)
       if (statusFilter) q = q.eq('status', statusFilter)
       if (sourceFilter) q = q.eq('lead_source', sourceFilter)
-      if (hasPhone) q = q.not('phone_primary', 'is', null)
+      if (hasPhone) q = q.not('phone_primary', 'is', null).neq('phone_primary', '')
       if (dateFrom) q = q.gte('created_at', new Date(dateFrom).toISOString())
       if (dateTo) q = q.lte('created_at', new Date(dateTo + 'T23:59:59').toISOString())
       if (countyFilter.length) q = q.in('properties.county', countyFilter)
-      if (cityFilter) q = q.eq('properties.city', cityFilter)
-      if (zipFilter) q = q.eq('properties.zip', zipFilter)
+      if (cityFilter) q = q.ilike('properties.city', `%${cityFilter}%`)
+      if (zipFilter) q = q.ilike('properties.zip', `%${zipFilter}%`)
       if (streetFilter) q = q.ilike('properties.address', `%${streetFilter}%`)
 
       const { data, count, error } = await q
@@ -91,14 +77,20 @@ function SellerLeadsContent() {
 
   const hasActiveFilters = streetFilter || cityFilter || zipFilter || countyFilter.length || tierFilter || statusFilter || sourceFilter || hasPhone || dateFrom || dateTo
 
+  const zillowUrl = (lead: any) => {
+    const prop = lead.properties
+    const addr = prop?.address || lead.mailing_address
+    if (!addr) return null
+    const parts = [addr, prop?.city, prop?.state, prop?.zip].filter(Boolean)
+    return `https://www.zillow.com/homes/${parts.map(s => encodeURIComponent(s)).join('-')}_rb/`
+  }
+
   return (
     <div className="animate-fade-in">
       <TopBar title="Seller Leads" subtitle={`${data?.total || 0} total leads`} />
 
       <div className="p-6">
-        {/* Filters */}
         <div className="card p-4 mb-4 space-y-3">
-          {/* Row 1: Search + quick actions */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-64">
               <input
@@ -110,83 +102,44 @@ function SellerLeadsContent() {
               />
             </div>
             {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="px-3 py-2 text-xs rounded-lg border border-danger/30 text-danger hover:bg-danger/10 transition-all whitespace-nowrap"
-              >
+              <button onClick={clearFilters} className="px-3 py-2 text-xs rounded-lg border border-danger/30 text-danger hover:bg-danger/10 transition-all whitespace-nowrap">
                 ✕ Clear Filters
               </button>
             )}
             <span className="text-xs text-text-secondary ml-auto">{filtered.length} results</span>
           </div>
 
-          {/* Row 2: Location filters */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-xs text-text-secondary font-medium uppercase tracking-wider mr-1">📍 Location</div>
-            
-            <input
-              type="text"
-              placeholder="Street name..."
-              value={streetFilter}
-              onChange={e => { setStreetFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all w-[140px]"
-            />
-
-            <select
-              value={cityFilter}
-              onChange={e => { setCityFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all max-w-[160px]"
-            >
-              <option value="">All Cities</option>
-              {cityOptions?.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
-            <input
-              type="text"
-              placeholder="ZIP code..."
-              value={zipFilter}
-              onChange={e => { setZipFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all w-[110px]"
-            />
-
-            <select
-              onChange={e => { setCountyFilter(e.target.value ? [e.target.value] : []); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all max-w-[160px]"
-            >
+            <input type="text" placeholder="Street..." value={streetFilter} onChange={e => { setStreetFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all w-[120px]" />
+            <input type="text" placeholder="City..." value={cityFilter} onChange={e => { setCityFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all w-[120px]" />
+            <input type="text" placeholder="ZIP..." value={zipFilter} onChange={e => { setZipFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-primary/50 transition-all w-[90px]" />
+            <select onChange={e => { setCountyFilter(e.target.value ? [e.target.value] : []); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all max-w-[150px]">
               <option value="">All Counties</option>
               {COUNTIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
 
-          {/* Row 3: Lead filters */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-xs text-text-secondary font-medium uppercase tracking-wider mr-1">🏷️ Lead</div>
-
-            <select
-              value={tierFilter}
-              onChange={e => { setTierFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all"
-            >
+            <select value={tierFilter} onChange={e => { setTierFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all">
               <option value="">All Tiers</option>
               <option value="hot">🔴 HOT</option>
               <option value="warm">🟠 WARM</option>
               <option value="cool">🔵 COOL</option>
             </select>
-
-            <select
-              value={statusFilter}
-              onChange={e => { setStatusFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all"
-            >
+            <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all">
               <option value="">All Statuses</option>
               {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-
-            <select
-              value={sourceFilter}
-              onChange={e => { setSourceFilter(e.target.value); setPage(0) }}
-              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all"
-            >
+            <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(0) }}
+              className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all">
               <option value="">All Sources</option>
               <option value="atlas_scrape">Atlas Scrape</option>
               <option value="socrata_counties">Socrata Counties</option>
@@ -194,38 +147,20 @@ function SellerLeadsContent() {
               <option value="socrata_eviction">Eviction Records</option>
               <option value="manual">Manual Entry</option>
             </select>
-
-            <button
-              onClick={() => { setHasPhone(h => !h); setPage(0) }}
-              className={cn(
-                'px-3 py-1.5 text-xs rounded-lg border transition-all whitespace-nowrap',
-                hasPhone
-                  ? 'bg-primary/20 border-primary/50 text-primary'
-                  : 'bg-bg border-border text-text-secondary hover:text-text-primary'
-              )}
-            >
+            <button onClick={() => { setHasPhone(h => !h); setPage(0) }}
+              className={cn('px-3 py-1.5 text-xs rounded-lg border transition-all whitespace-nowrap', hasPhone ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-bg border-border text-text-secondary hover:text-text-primary')}>
               📞 Has Phone
             </button>
-
             <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={e => { setDateFrom(e.target.value); setPage(0) }}
-                className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]"
-              />
+              <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(0) }}
+                className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]" />
               <span>→</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={e => { setDateTo(e.target.value); setPage(0) }}
-                className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]"
-              />
+              <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0) }}
+                className="bg-bg border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary/50 transition-all w-[130px]" />
             </div>
           </div>
         </div>
 
-        {/* Table */}
         <div className="card overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-20"><Spinner size="lg" /></div>
@@ -244,44 +179,30 @@ function SellerLeadsContent() {
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Phone</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Last Contact</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Source</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">Zillow</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filtered.map(lead => (
-                    <tr
-                      key={lead.id}
-                      className="table-row-hover transition-colors"
-                      onClick={() => router.push(`/seller-leads/${lead.id}`)}
-                    >
+                    <tr key={lead.id} className="table-row-hover transition-colors" onClick={() => router.push(`/seller-leads/${lead.id}`)}>
+                      <td className="px-4 py-3"><ScoreBadge tier={lead.score_tier} score={lead.score} size="sm" /></td>
                       <td className="px-4 py-3">
-                        <ScoreBadge tier={lead.score_tier} score={lead.score} size="sm" />
+                        <span className="font-mono text-xs text-text-primary">{lead.properties?.address || lead.mailing_address || 'No address'}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-text-primary">
-                          {lead.properties?.address || lead.mailing_address || 'No address'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary text-xs">
-                        {lead.owner_full_name || lead.owner_entity_name || '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={lead.status} />
-                      </td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{lead.owner_full_name || lead.owner_entity_name || '—'}</td>
+                      <td className="px-4 py-3"><StatusBadge status={lead.status} /></td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
                         {lead.properties?.city || lead.mailing_city || '—'}
                         {lead.properties?.zip && <span className="text-text-secondary/50 ml-1">{lead.properties.zip}</span>}
-                        {lead.properties?.county && !lead.properties?.city && (
-                          <span className="block">({formatCounty(lead.properties.county)})</span>
-                        )}
                       </td>
-                      <td className="px-4 py-3 text-text-secondary text-xs font-mono">
-                        {lead.phone_primary || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary text-xs">
-                        {lead.last_contacted_at ? timeAgo(lead.last_contacted_at) : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary text-xs">
-                        {lead.lead_source || '—'}
+                      <td className="px-4 py-3 text-text-secondary text-xs font-mono">{lead.phone_primary || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{lead.last_contacted_at ? timeAgo(lead.last_contacted_at) : '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{lead.lead_source || '—'}</td>
+                      <td className="px-4 py-3">
+                        {zillowUrl(lead) ? (
+                          <a href={zillowUrl(lead)!} target="_blank" rel="noopener noreferrer"
+                            className="text-primary-400 hover:text-primary-300 underline text-xs whitespace-nowrap">🏠 View</a>
+                        ) : '—'}
                       </td>
                     </tr>
                   ))}
@@ -291,27 +212,14 @@ function SellerLeadsContent() {
           )}
         </div>
 
-        {/* Pagination */}
         {data && data.total > PAGE_SIZE && (
           <div className="flex items-center justify-between mt-4">
-            <span className="text-xs text-text-secondary">
-              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, data.total)} of {data.total}
-            </span>
+            <span className="text-xs text-text-secondary">Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, data.total)} of {data.total}</span>
             <div className="flex gap-2">
-              <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={(page + 1) * PAGE_SIZE >= data.total}
-                className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Next
-              </button>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all">Previous</button>
+              <button onClick={() => setPage(p => p + 1)} disabled={(page + 1) * PAGE_SIZE >= data.total}
+                className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all">Next</button>
             </div>
           </div>
         )}
