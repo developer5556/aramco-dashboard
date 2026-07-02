@@ -141,25 +141,46 @@ function SellerLeadsContent() {
                         {lead.lead_source || '—'}
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
-                        {lead.properties?.address && lead.properties?.city && lead.properties?.state && lead.properties?.zip ? (
-                          <a 
-                            href={`https://www.zillow.com/homes/${[lead.properties.address, lead.properties.city, lead.properties.state, lead.properties.zip].map(s => (s || '').replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary-400 hover:text-primary-300 underline text-xs"
-                          >
-                            View on Zillow
-                          </a>
-                        ) : lead.properties?.address ? (
-                          <a 
-                            href={`https://www.zillow.com/homes/${lead.properties.address.replace(/\s+/g, '-').replace(/[#?,]/g, '')}_rb/`}
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary-400 hover:text-primary-300 underline text-xs"
-                          >
-                            View on Zillow
-                          </a>
-                        ) : '—'}
+                        {(() => {
+                          const prop = lead.properties
+                          if (prop?.address && prop?.city && prop?.state && prop?.zip) {
+                            return (
+                              <a 
+                                href={`https://www.zillow.com/homes/${[prop.address, prop.city, prop.state, prop.zip].map(s => s.replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary-400 hover:text-primary-300 underline text-xs"
+                              >
+                                View on Zillow
+                              </a>
+                            )
+                          }
+                          if (prop?.address) {
+                            return (
+                              <a 
+                                href={`https://www.zillow.com/homes/${prop.address.replace(/\s+/g, '-').replace(/[#?,]/g, '')}_rb/`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary-400 hover:text-primary-300 underline text-xs"
+                              >
+                                View on Zillow
+                              </a>
+                            )
+                          }
+                          if (lead.mailing_address) {
+                            return (
+                              <a 
+                                href={`https://www.zillow.com/homes/${lead.mailing_address.replace(/\s+/g, '-').replace(/[#?,]/g, '')}_rb/`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary-400 hover:text-primary-300 underline text-xs"
+                              >
+                                View on Zillow
+                              </a>
+                            )
+                          }
+                          return '—'
+                        })()}
                       </td>
                     </tr>
                   ))}

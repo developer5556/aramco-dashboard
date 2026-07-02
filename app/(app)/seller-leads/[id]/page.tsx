@@ -172,19 +172,28 @@ function LeadDetailContent() {
                   <div>
                     <span className="text-text-secondary text-xs">Address</span>
                     <p className="text-text-primary">
-                      {property.address}
-                      {property.address && property.city && property.state && property.zip && (
-                        <> {' '}
-                          <a
-                            href={`https://www.zillow.com/homes/${[property.address, property.city, property.state, property.zip].map(s => (s || '').replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')}_rb/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary-400 hover:text-primary-300 underline text-[11px]"
-                          >
-                            Zillow ↗
-                          </a>
-                        </>
-                      )}
+                      {property?.address || lead.mailing_address || 'No address'}
+                      {(() => {
+                        const addr = property?.address && property?.city && property?.state && property?.zip
+                          ? [property.address, property.city, property.state, property.zip].map(s => s.replace(/\s+/g, '-').replace(/[#?,]/g, '')).join('-')
+                          : property?.address
+                            ? property.address.replace(/\s+/g, '-').replace(/[#?,]/g, '')
+                            : lead.mailing_address
+                              ? lead.mailing_address.replace(/\s+/g, '-').replace(/[#?,]/g, '')
+                              : null
+                        return addr ? (
+                          <> {' '}
+                            <a
+                              href={`https://www.zillow.com/homes/${addr}_rb/`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-400 hover:text-primary-300 underline text-[11px]"
+                            >
+                              Zillow ↗
+                            </a>
+                          </>
+                        ) : null
+                      })()}
                     </p>
                   </div>
                   <div>
