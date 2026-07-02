@@ -105,6 +105,26 @@ export default function DashboardPage() {
       <TopBar title="Command Center" subtitle="Aramco Properties — Live Operations" />
 
       <div className="p-6 space-y-6">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link href="/seller-leads" className="card p-4 hover:bg-white/3 transition-all group flex items-center gap-3">
+            <span className="text-2xl">👥</span>
+            <div><p className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Seller Leads</p><p className="text-[10px] text-text-secondary">View all leads</p></div>
+          </Link>
+          <Link href="/pipeline" className="card p-4 hover:bg-white/3 transition-all group flex items-center gap-3">
+            <span className="text-2xl">💰</span>
+            <div><p className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Pipeline</p><p className="text-[10px] text-text-secondary">Active deals</p></div>
+          </Link>
+          <Link href="/maps" className="card p-4 hover:bg-white/3 transition-all group flex items-center gap-3">
+            <span className="text-2xl">🗺️</span>
+            <div><p className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Property Map</p><p className="text-[10px] text-text-secondary">All properties</p></div>
+          </Link>
+          <Link href="/agent-monitor" className="card p-4 hover:bg-white/3 transition-all group flex items-center gap-3">
+            <span className="text-2xl">🤖</span>
+            <div><p className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Agent Monitor</p><p className="text-[10px] text-text-secondary">Health & activity</p></div>
+          </Link>
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICard title="Active Leads" value={kpis?.activeLeads ?? '—'} icon="👥" color="primary" loading={kpiLoading} />

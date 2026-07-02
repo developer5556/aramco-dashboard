@@ -10,16 +10,16 @@ const navItems = [
   { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
   { href: '/seller-leads', icon: '👥', label: 'Seller Leads', badge: 'hot' },
   { href: '/pipeline', icon: '💰', label: 'Pipeline', badge: 'pipeline' },
+  { href: '/maps', icon: '🗺️', label: 'Property Map' },
+  { href: '/agent-monitor', icon: '🤖', label: 'Agent Monitor' },
   { href: '/buyer-leads', icon: '🏆', label: 'Buyer Leads' },
   { href: '/appointments', icon: '📅', label: 'Appointments' },
   { href: '/tasks', icon: '✅', label: 'Tasks', badge: 'tasks' },
 ]
 
 const secondaryNav = [
-  { href: '/analytics', icon: '�', label: 'Analytics' },
-  { href: '/maps', icon: '�️', label: 'Maps' },
-  { href: '/contracts', icon: '�', label: 'Contracts' },
-  { href: '/agent-monitor', icon: '🤖', label: 'Agent Monitor' },
+  { href: '/analytics', icon: '📊', label: 'Analytics' },
+  { href: '/contracts', icon: '📄', label: 'Contracts' },
   { href: '/notifications', icon: '🔔', label: 'Notifications', badge: 'approvals' },
 ]
 
