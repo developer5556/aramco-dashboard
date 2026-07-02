@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import TopBar from '@/components/shared/TopBar'
 import { ScoreBadge, StatusBadge, EmptyState, Spinner } from '@/components/shared'
-import { formatDate, timeAgo, formatCounty } from '@/lib/utils'
+import { formatDate, timeAgo, formatCounty, cn } from '@/lib/utils'
 import { COUNTIES, LEAD_STATUSES } from '@/constants'
 
 function SellerLeadsContent() {
@@ -16,13 +16,14 @@ function SellerLeadsContent() {
   const [tierFilter, setTierFilter] = useState(searchParams.get('tier') || '')
   const [statusFilter, setStatusFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
+  const [hasPhone, setHasPhone] = useState(false)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 25
 
   const { data, isLoading } = useQuery({
-    queryKey: ['seller-leads', search, countyFilter, tierFilter, statusFilter, sourceFilter, dateFrom, dateTo, page],
+    queryKey: ['seller-leads', search, countyFilter, tierFilter, statusFilter, sourceFilter, hasPhone, dateFrom, dateTo, page],
     queryFn: async () => {
       let q = supabase
         .from('seller_leads')
@@ -33,6 +34,7 @@ function SellerLeadsContent() {
       if (tierFilter) q = q.eq('score_tier', tierFilter)
       if (statusFilter) q = q.eq('status', statusFilter)
       if (sourceFilter) q = q.eq('lead_source', sourceFilter)
+      if (hasPhone) q = q.not('phone_primary', 'is', null)
       if (dateFrom) q = q.gte('created_at', new Date(dateFrom).toISOString())
       if (dateTo) q = q.lte('created_at', new Date(dateTo + 'T23:59:59').toISOString())
       if (countyFilter.length) q = q.in('properties.county', countyFilter)
@@ -86,7 +88,7 @@ function SellerLeadsContent() {
             className="bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary/50 transition-all"
           >
             <option value="">All Statuses</option>
-            {LEAD_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
 
           <select
@@ -109,6 +111,18 @@ function SellerLeadsContent() {
             <option value="">All Counties</option>
             {COUNTIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
+
+          <button
+            onClick={() => { setHasPhone(h => !h); setPage(0) }}
+            className={cn(
+              'px-3 py-2 text-xs rounded-lg border transition-all whitespace-nowrap',
+              hasPhone
+                ? 'bg-primary/20 border-primary/50 text-primary'
+                : 'bg-bg border-border text-text-secondary hover:text-text-primary'
+            )}
+          >
+            📞 Has Phone
+          </button>
 
           <div className="flex items-center gap-1.5 text-xs text-text-secondary">
             <input
