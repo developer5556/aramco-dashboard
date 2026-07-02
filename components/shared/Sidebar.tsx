@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
   { href: '/seller-leads', icon: '👥', label: 'Seller Leads', badge: 'hot' },
+  { href: '/contacted-leads', icon: '📞', label: 'Contacted', badge: 'contacted' },
   { href: '/pipeline', icon: '💰', label: 'Pipeline', badge: 'pipeline' },
   { href: '/maps', icon: '🗺️', label: 'Property Map' },
   { href: '/agent-monitor', icon: '🤖', label: 'Agent Monitor' },
@@ -47,14 +48,16 @@ export default function Sidebar() {
   const { data: badges } = useQuery({
     queryKey: ['sidebar-badges'],
     queryFn: async () => {
-      const [hotLeads, pipeline, tasks, approvals] = await Promise.all([
+      const [hotLeads, pipeline, tasks, approvals, contacted] = await Promise.all([
         supabase.from('seller_leads').select('id', { count: 'exact' }).eq('score_tier', 'hot'),
         supabase.from('pipeline').select('id', { count: 'exact' }).not('stage', 'in', '(closed,dead)'),
         supabase.from('tasks').select('id', { count: 'exact' }).eq('status', 'pending').lt('due_at', new Date().toISOString()),
         supabase.from('approvals').select('id', { count: 'exact' }).eq('status', 'pending'),
+        supabase.from('seller_leads').select('id', { count: 'exact' }).not('last_contacted_at', 'is', null),
       ])
       return {
         hot: hotLeads.count || 0,
+        contacted: contacted.count || 0,
         pipeline: pipeline.count || 0,
         tasks: tasks.count || 0,
         approvals: approvals.count || 0,
